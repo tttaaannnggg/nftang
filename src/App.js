@@ -1,30 +1,63 @@
-import './styles/App.css';
-import twitterLogo from './assets/twitter-logo.svg';
-import React from "react";
+import "./styles/App.css";
+import twitterLogo from "./assets/twitter-logo.svg";
+import React, { useEffect, useState } from "react";
+import { listenForEvent, tryToMintToken } from "./utils/mint.utils";
+import { ConnectButton, MintButton, LogoutButton } from "./modules/buttons";
 
 // Constants
-const TWITTER_HANDLE = '_buildspace';
+const TWITTER_HANDLE = "_buildspace";
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
-const OPENSEA_LINK = '';
-const TOTAL_MINT_COUNT = 50;
+const OPENSEA_LINK = "";
+const CONTRACT_ADDRESS = "0x157Dc71B95C2D1Ac5eD8F445ddCdc413fc86Db84";
+
+const hasWallet = () => {
+  const { ethereum } = window;
+  return !!ethereum;
+};
+
+const logIn = () => window.ethereum.request({ method: "eth_requestAccounts" });
+
+const getAccount = () => window.ethereum.request({ method: "eth_accounts" });
 
 const App = () => {
   // Render Methods
-  const renderNotConnectedContainer = () => (
-    <button className="cta-button connect-wallet-button">
-      Connect to Wallet
-    </button>
-  );
+
+  const [account, setAccount] = useState("");
+
+  useEffect(async () => {}, []);
 
   return (
     <div className="App">
       <div className="container">
         <div className="header-container">
-          <p className="header gradient-text">My NFT Collection</p>
+          <p className="header gradient-text">NFTang</p>
+          <p className="sub-text">what's good y'all?</p>
           <p className="sub-text">
-            Each unique. Each beautiful. Discover your NFT today.
+            currently{" "}
+            {account ? `authenticated as ${account}` : "not authenticated"}
           </p>
-          {renderNotConnectedContainer()}
+          {account ? (
+            <>
+              <div>
+                <MintButton
+                  onClick={() => tryToMintToken({ CONTRACT_ADDRESS })}
+                />
+              </div>
+              <div>
+                <LogoutButton setAccount={setAccount} />
+              </div>
+            </>
+          ) : (
+            <ConnectButton
+              onClick={async () => {
+                await logIn();
+                const availableAccounts = await getAccount();
+                setAccount(availableAccounts[0]);
+                listenForEvent({ CONTRACT_ADDRESS });
+                console.log("authenticated with", availableAccounts[0]);
+              }}
+            />
+          )}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
